@@ -1,0 +1,118 @@
+<?php
+session_start();
+
+// Sample products with tech/general item images
+$products = [
+    1 => [
+        'name' => 'Headphones',
+        'price' => 59.99,
+        'image' => 'https://m.media-amazon.com/images/I/71VR6c3j2bL.jpg'
+    ],
+    2 => [
+        'name' => 'Backpack',
+        'price' => 39.99,
+        'image' => 'https://i5.walmartimages.com/asr/c447fa1f-6ff8-44f8-af35-29f060b88d19.52dd46feb1492f1a55124e998c5802ed.jpeg'
+    ],
+    3 => [
+        'name' => 'Wristwatch',
+        'price' => 79.99,
+        'image' => 'https://sothebys-md.brightspotcdn.com/dims4/default/4a18b8b/2147483647/strip/true/crop/2000x2000+0+0/resize/2048x2048!/quality/90/?url=http:%2F%2Fsothebys-brightspot.s3.amazonaws.com%2Fmedia-desk%2Fdf%2Fa8%2F18e1108b43babb0c67b08e53721a%2Fhk1271-ccy35-049-02-1-t3.jpg'
+    ],
+];
+
+// Add to cart
+if (isset($_POST['add_to_cart'])) {
+    $product_id = (int)$_POST['product_id'];
+    if (isset($products[$product_id])) {
+        if (isset($_SESSION['cart'][$product_id])) {
+            $_SESSION['cart'][$product_id]['quantity']++;
+        } else {
+            $_SESSION['cart'][$product_id] = [
+                'name' => $products[$product_id]['name'],
+                'price' => $products[$product_id]['price'],
+                'quantity' => 1,
+                'image' => $products[$product_id]['image'],
+            ];
+        }
+    }
+}
+
+// Remove from cart
+if (isset($_GET['remove'])) {
+    unset($_SESSION['cart'][(int)$_GET['remove']]);
+}
+
+// Clear cart
+if (isset($_GET['clear'])) {
+    unset($_SESSION['cart']);
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shopping Cart - Tech Items</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 40px; }
+        .product { margin-bottom: 20px; display: flex; align-items: center; }
+        .product img { width: 100px; height: 100px; object-fit: cover; margin-right: 20px; border: 1px solid #ccc; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .cart-img { width: 60px; height: 60px; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+<h2>🛍 Products</h2>
+<?php foreach ($products as $id => $product): ?>
+    <div class="product">
+        <img src="<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+        <div>
+            <strong><?= htmlspecialchars($product['name']) ?></strong><br>
+            $<?= number_format($product['price'], 2) ?><br>
+            <form method="post" style="margin-top: 8px;">
+                <input type="hidden" name="product_id" value="<?= $id ?>">
+                <button type="submit" name="add_to_cart">Add to Cart</button>
+            </form>
+        </div>
+    </div>
+<?php endforeach; ?>
+
+<h2>🛒 Your Cart</h2>
+<?php if (!empty($_SESSION['cart'])): ?>
+    <table>
+        <tr>
+            <th>Image</th>
+            <th>Item</th>
+            <th>Price</th>
+            <th>Qty</th>
+            <th>Subtotal</th>
+            <th>Action</th>
+        </tr>
+        <?php $total = 0; ?>
+        <?php foreach ($_SESSION['cart'] as $id => $item): ?>
+            <?php $subtotal = $item['price'] * $item['quantity']; ?>
+            <?php $total += $subtotal; ?>
+            <tr>
+                <td><img class="cart-img" src="<?= htmlspecialchars($item['image']) ?>" alt=""></td>
+                <td><?= htmlspecialchars($item['name']) ?></td>
+                <td>$<?= number_format($item['price'], 2) ?></td>
+                <td><?= $item['quantity'] ?></td>
+                <td>$<?= number_format($subtotal, 2) ?></td>
+                <td><a href="?remove=<?= $id ?>">Remove</a></td>
+            </tr>
+        <?php endforeach; ?>
+        <tr>
+            <th colspan="4">Total</th>
+            <th>$<?= number_format($total, 2) ?></th>
+            <th><a href="?clear=1">Clear Cart</a></th>
+        </tr>
+    </table>
+<?php else: ?>
+    <p>Your cart is empty.</p>
+<?php endif; ?>
+
+</body>
+</html>
